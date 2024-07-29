@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using DestinyBuildsBack.Data;
+using DestinyBuildsBack.Interfaces;
 using DestinyBuildsBack.Mappings;
 using DestinyBuildsBack.Models;
+using DestinyBuildsBack.Service;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
@@ -49,6 +51,7 @@ builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddScoped<ITokenService, TokenService>();
 
 var app = builder.Build();
 

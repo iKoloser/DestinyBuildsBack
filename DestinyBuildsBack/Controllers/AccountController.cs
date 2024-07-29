@@ -3,74 +3,96 @@ using DestinyBuildsBack.Interfaces;
 using DestinyBuildsBack.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.EntityFrameworkCore;
 
-namespace DestinyBuildsBack.Controllers;
-
-[Route("api/account")]
-[ApiController]
-public class AccountController : ControllerBase
+namespace DestinyBuildsBack.Controllers
 {
-    private readonly UserManager<AppUser> _userManager;
-    private readonly ITokenService _tokenService;
-    public AccountController(UserManager<AppUser> userManager, ITokenService tokenService)
+    [Route("api/account")]
+    [ApiController]
+    public class AccountController : ControllerBase
     {
-        _userManager = userManager;
-        _tokenService = tokenService;
-    }
+        private readonly UserManager<AppUser> _userManager;
+        private readonly ITokenService _tokenService;
+        private readonly SignInManager<AppUser> _signInManager;
 
-    [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
-    {
-        try
+        public AccountController(UserManager<AppUser> userManager, ITokenService tokenService, SignInManager<AppUser> signInManager)
+        {
+            _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
+            _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
+            _signInManager = signInManager ?? throw new ArgumentNullException(nameof(signInManager));
+        }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login(LoginDto loginDto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var appUser = new AppUser
-            {
-                UserName = registerDto.UserName,
-                Email = registerDto.Email
-            };
+            var user = await _userManager.Users.FirstOrDefaultAsync(x => x.UserName.ToLower() == loginDto.UserName.ToLower());
 
-            var createUser = await _userManager.CreateAsync(appUser, registerDto.Password);
-            
-            if (createUser.Succeeded)
+            if (user == null)
+                return Unauthorized("Invalid username.");
+
+            var result = await _signInManager.CheckPasswordSignInAsync(user, loginDto.Password, false);
+
+            if (!result.Succeeded)
+                return Unauthorized("Invalid password.");
+
+            return Ok(new NewUserDto
             {
-                var roleResult = await _userManager.AddToRoleAsync(appUser, "User");
-                
-                if (roleResult.Succeeded)
+                UserName = user.UserName,
+                Email = user.Email,
+                Token = _tokenService.CreateToken(user)
+            });
+        }
+
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var appUser = new AppUser
                 {
-                    return Ok(
-                        new NewUserDto()
+                    UserName = registerDto.UserName,
+                    Email = registerDto.Email
+                };
+
+                var createUser = await _userManager.CreateAsync(appUser, registerDto.Password);
+
+                if (createUser.Succeeded)
+                {
+                    var roleResult = await _userManager.AddToRoleAsync(appUser, "User");
+
+                    if (roleResult.Succeeded)
+                    {
+                        return Ok(new NewUserDto
                         {
                             UserName = appUser.UserName,
                             Email = appUser.Email,
                             Token = _tokenService.CreateToken(appUser)
-                        }
-                        );
+                        });
+                    }
+                    else
+                    {
+                        return StatusCode(500, roleResult.Errors);
+                    }
                 }
                 else
                 {
-                    return StatusCode(500, roleResult.Errors);
+                    return StatusCode(500, createUser.Errors);
                 }
             }
-            else
+            catch (Exception e)
             {
-                return StatusCode(500, createUser.Errors);
+                return StatusCode(500, new
+                {
+                    Message = "An error occurred while processing your request.",
+                    Error = e.Message,
+                });
             }
-            
         }
-        catch (Exception e)
-        {
-            return StatusCode(500, new 
-            {
-                Message = "An error occurred while processing your request.",
-                Error = e.Message,
-                
-            });
-        }
-
-
     }
 }

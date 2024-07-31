@@ -8,4 +8,5 @@ public class Subclase
         
     public int ClaseId { get; set; }
     public Clase Clase { get; set; }
+    public string ImgUrl { get; set; }
 }

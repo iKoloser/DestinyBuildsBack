@@ -4,6 +4,7 @@ using DestinyBuildsBack.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DestinyBuildsBack.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240730192805_FixApiSyntax")]
+    partial class FixApiSyntax
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -265,13 +268,13 @@ namespace DestinyBuildsBack.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "c08bce54-b1f5-422e-ab83-9c5694142e0e",
+                            Id = "8cd2ccf8-0f90-483d-8b44-43640ec00e1d",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
-                            Id = "ec64cb0c-2777-4051-b60a-26a696cc3f3e",
+                            Id = "dcd0b19c-fceb-4b6c-accb-3929f06ac102",
                             Name = "User",
                             NormalizedName = "USER"
                         });
